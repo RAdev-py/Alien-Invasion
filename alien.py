@@ -1,4 +1,5 @@
 import pygame
+import random
 
 from pygame.sprite import Sprite
 
@@ -23,10 +24,18 @@ class Alien(Sprite):
         # Store the alien's exact horizontal position.
         self.x = float(self.rect.x)
 
+        # Store the probability that this alien will drop a power-up on death
+        # self.drop_chance = random.randint(1, 100)
+        self.drop_chance = random.random()
+
+
     def check_edges(self):
         """Return True if alien is at edge of screen."""
         screen_rect = self.screen.get_rect()
         return (self.rect.right >= screen_rect.right) or (self.rect.left <= 0)
+
+    def spawn_powerup(self):
+        return self.drop_chance < self.settings.drop_chance_threshold
 
     def update(self):
         """Move the alien right or left."""

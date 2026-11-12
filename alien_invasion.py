@@ -10,7 +10,7 @@ from button import Button
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
-
+from powerup import PowerUp
 
 class AlienInvasion:
     """Overall class to manage game assets and behavior."""
@@ -31,8 +31,10 @@ class AlienInvasion:
         self.sb = Scoreboard(self)
 
         self.ship = Ship(self)
+        self.powerup = None
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+        self.powerups = pygame.sprite.Group()
 
         self._create_fleet()
 
@@ -51,6 +53,7 @@ class AlienInvasion:
                 self.ship.update()
                 self._update_bullets()
                 self._update_aliens()
+                self._update_powerups()
 
             self._update_screen()
             self.clock.tick(60)
@@ -137,7 +140,14 @@ class AlienInvasion:
 
         if collisions:
             for aliens in collisions.values():
+                for alien in aliens:
+                    if alien.spawn_powerup():
+                        powerup = PowerUp(self, alien)
+                        self.powerups.add(powerup)
+
+
                 self.stats.score += self.settings.alien_points * len(aliens)
+
             self.sb.prep_score()
             self.sb.check_high_score()
 
@@ -192,6 +202,32 @@ class AlienInvasion:
                 self._ship_hit()
                 break
 
+    def _update_powerups(self):
+        """Update position of powerups and get rid of old powerups."""
+        self.powerups.update()
+
+        # Get rid of powerups that have disappeared.
+        for powerup in self.powerups.copy():
+            if powerup.rect.bottom >= self.screen.get_rect().bottom:
+                self.powerups.remove(powerup)
+
+        self._check_powerup_ship_collisions()
+        
+        if self.powerup:
+            if self.powerup.expire():
+                self.powerup.deactivate()
+                self.powerup = None
+
+
+    def _check_powerup_ship_collisions(self):
+            """Respond to powerup-ship collisions."""
+            # Remove any powerups that have collided.
+            collision = pygame.sprite.spritecollide(self.ship, self.powerups, True)
+
+            if collision:
+                for powerup in collision:
+                    powerup.activate()
+
     def _create_fleet(self):
         """Create the fleet of aliens."""
         # Create an alien and keep adding aliens until there's no room left.
@@ -237,6 +273,8 @@ class AlienInvasion:
             bullet.draw_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
+        for powerup in self.powerups.sprites(): 
+            powerup.blitme()
 
         # Draw the score information.
         self.sb.show_score()
