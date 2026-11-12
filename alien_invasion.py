@@ -226,7 +226,9 @@ class AlienInvasion:
 
             if collision:
                 for powerup in collision:
-                    powerup.activate()
+                    if not self.powerup:
+                        powerup.activate()
+                        break
 
     def _create_fleet(self):
         """Create the fleet of aliens."""

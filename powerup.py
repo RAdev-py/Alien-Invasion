@@ -36,10 +36,11 @@ class PowerUp(Sprite):
     def activate(self):
         self.activation_time = time()
         self.ai_game.powerup = self
-        self.settings.bullet_speed *= 1.1
+        self.settings.bullet_speed *= 2
+        print("Power Activated")
 
     def deactivate(self):
-        self.settings.bullet_speed /= 1.1
+        self.settings.bullet_speed /= 2
 
     def update(self):
         """Move the powerup down."""
