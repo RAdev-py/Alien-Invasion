@@ -27,7 +27,7 @@ class Settings:
 
         # Powerup Settings
         # How long a powerup lasts for
-        self.powerup_lifetime = 5000
+        self.powerup_lifetime = 7
 
         self.initialize_dynamic_settings()
 

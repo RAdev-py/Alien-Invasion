@@ -31,13 +31,16 @@ class Ship(Sprite):
         self.rect.midbottom = self.screen_rect.midbottom
         self.x = float(self.rect.x)
 
-    def update(self):
+    def update(self, ai_game):
         """Update the ship's position based on movement flags."""
+        modifier = 1.0
+        if ai_game.powerup != None and ai_game.powerup.type == "speed":
+            modifier = 2.0
         # Update the ship's x value, not the rect.
         if self.moving_right and self.rect.right < self.screen_rect.right:
-            self.x += self.settings.ship_speed
+            self.x += self.settings.ship_speed * modifier
         if self.moving_left and self.rect.left > 0:
-            self.x -= self.settings.ship_speed
+            self.x -= self.settings.ship_speed * modifier
             
         # Update rect object from self.x.
         self.rect.x = self.x

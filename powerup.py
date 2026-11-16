@@ -1,4 +1,5 @@
 import pygame
+import random
 
 from pygame.sprite import Sprite
 from time import time
@@ -13,6 +14,12 @@ class PowerUp(Sprite):
         self.screen = ai_game.screen
         self.ai_game = ai_game
         self.settings = ai_game.settings
+        # default type of powerup is explosion, should be changed to other types by chance.
+        match random.randint(1,2):
+            case 1:
+                self.type = "explosion"
+            case 2:
+                self.type = "speed"
 
         # Load the powerup image and set its rect attribute.
         original_image =  pygame.image.load('images/lightning.png').convert_alpha()

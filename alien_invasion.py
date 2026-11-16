@@ -2,15 +2,17 @@ import sys
 from time import sleep
 
 import pygame
+import random
 
 from settings import Settings
 from game_stats import GameStats
 from scoreboard import Scoreboard
 from button import Button
 from ship import Ship
-from bullet import Bullet
-from alien import Alien
+from bullet import Bullet, ExplodeBullet
+from alien import Alien, ArmoredAlien
 from powerup import PowerUp
+from explosion import Explosion
 
 class AlienInvasion:
     """Overall class to manage game assets and behavior."""
@@ -35,6 +37,7 @@ class AlienInvasion:
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.powerups = pygame.sprite.Group()
+        self.explosions = pygame.sprite.Group()
 
         self._create_fleet()
 
@@ -50,10 +53,11 @@ class AlienInvasion:
             self._check_events()
 
             if self.game_active:
-                self.ship.update()
+                self.ship.update(self)
                 self._update_bullets()
                 self._update_aliens()
                 self._update_powerups()
+                self._update_explosions()
 
             self._update_screen()
             self.clock.tick(60)
@@ -115,10 +119,13 @@ class AlienInvasion:
             self.ship.moving_left = False
 
     def _fire_bullet(self):
-        """Create a new bullet and add it to the bullets group."""
+        """Create a new bullet based on active powerups and add it to the bullets group."""
         if len(self.bullets) < self.settings.bullets_allowed:
-            new_bullet = Bullet(self)
-            self.bullets.add(new_bullet)
+                if self.powerup and self.powerup.type == "explosion":
+                    new_bullet = ExplodeBullet(self)
+                else:
+                    new_bullet = Bullet(self)
+                self.bullets.add(new_bullet)
 
     def _update_bullets(self):
         """Update position of bullets and get rid of old bullets."""
@@ -139,8 +146,24 @@ class AlienInvasion:
                 self.bullets, self.aliens, True, True)
 
         if collisions:
+            # Exploding bullet handling.
+            for bullettype in collisions:
+                if isinstance(bullettype, ExplodeBullet):
+                    self.explosions.add(Explosion(self, bullettype.rect.center))
+                    for alien in self.aliens:
+                        if (alien.x+30 - bullettype.rect.x)**2 + (alien.rect.y+30 - bullettype.y)**2 < 150**2:
+                            if isinstance(alien, ArmoredAlien):
+                                unarmored = Alien(self)
+                                unarmored.x, unarmored.rect.topleft = alien.x, alien.rect.topleft
+                                self.aliens.add(unarmored)
+                            alien.kill()
+                            self.stats.score += self.settings.alien_points
             for aliens in collisions.values():
                 for alien in aliens:
+                    if isinstance(alien, ArmoredAlien):
+                        unarmored = Alien(self)
+                        unarmored.x, unarmored.rect.topleft = alien.x, alien.rect.topleft
+                        self.aliens.add(unarmored)
                     if alien.spawn_powerup():
                         powerup = PowerUp(self, alien)
                         self.powerups.add(powerup)
@@ -218,6 +241,11 @@ class AlienInvasion:
                 self.powerup.deactivate()
                 self.powerup = None
 
+    def _update_explosions(self):
+        """Update position of explosions"""
+        for explode in self.explosions:
+            explode.update()
+
 
     def _check_powerup_ship_collisions(self):
             """Respond to powerup-ship collisions."""
@@ -249,11 +277,14 @@ class AlienInvasion:
 
     def _create_alien(self, x_position, y_position):
         """Create an alien and place it in the fleet."""
-        new_alien = Alien(self)
-        new_alien.x = x_position
-        new_alien.rect.x = x_position
-        new_alien.rect.y = y_position
-        self.aliens.add(new_alien)
+        if random.randint(1, 5) == 1:
+            alien = ArmoredAlien(self)
+        else:
+            alien = Alien(self)
+        alien.x = x_position
+        alien.rect.x = x_position
+        alien.rect.y = y_position
+        self.aliens.add(alien)
 
     def _check_fleet_edges(self):
         """Respond appropriately if any aliens have reached an edge."""
@@ -275,6 +306,7 @@ class AlienInvasion:
             bullet.draw_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
+        self.explosions.draw(self.screen)
         for powerup in self.powerups.sprites(): 
             powerup.blitme()
 

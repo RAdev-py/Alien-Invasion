@@ -41,3 +41,9 @@ class Alien(Sprite):
         """Move the alien right or left."""
         self.x += self.settings.alien_speed * self.settings.fleet_direction
         self.rect.x = self.x
+
+class ArmoredAlien(Alien):
+    """A class to represents an armored alien"""
+    def __init__(self, ai_game):
+        super().__init__(ai_game)
+        self.image = pygame.image.load("images/alien_armored.jpg")
