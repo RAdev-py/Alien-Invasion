@@ -37,6 +37,9 @@ class Alien(Sprite):
     def spawn_powerup(self):
         return self.drop_chance < self.settings.drop_chance_threshold
 
+    def fire_bullet(self):
+        return random.random() <= self.settings.alien_bullet_threshold
+
     def update(self):
         """Move the alien right or left."""
         self.x += self.settings.alien_speed * self.settings.fleet_direction

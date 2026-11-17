@@ -13,6 +13,7 @@ from bullet import Bullet, ExplodeBullet
 from alien import Alien, ArmoredAlien
 from powerup import PowerUp
 from explosion import Explosion
+from alien_bullet import AlienBullets
 
 class AlienInvasion:
     """Overall class to manage game assets and behavior."""
@@ -38,6 +39,7 @@ class AlienInvasion:
         self.aliens = pygame.sprite.Group()
         self.powerups = pygame.sprite.Group()
         self.explosions = pygame.sprite.Group()
+        self.alien_bullets = pygame.sprite.Group()
 
         self._create_fleet()
 
@@ -58,6 +60,7 @@ class AlienInvasion:
                 self._update_aliens()
                 self._update_powerups()
                 self._update_explosions()
+                self._update_alien_bullets()
 
             self._update_screen()
             self.clock.tick(60)
@@ -92,6 +95,7 @@ class AlienInvasion:
             # Get rid of any remaining bullets and aliens.
             self.bullets.empty()
             self.aliens.empty()
+            self.alien_bullets.empty()
 
             # Create a new fleet and center the ship.
             self._create_fleet()
@@ -184,6 +188,23 @@ class AlienInvasion:
             self.stats.level += 1
             self.sb.prep_level()
 
+    def fire_alien_bullets(self):
+        for alien in self.aliens.sprites():
+            if alien.fire_bullet():
+                self.alien_bullets.add(AlienBullets(self, alien))
+
+    def _update_alien_bullets(self):
+        self.fire_alien_bullets()
+        self.alien_bullets.update()
+
+        for abullet in self.alien_bullets.copy():
+            if abullet.rect.top >= self.settings.screen_height:
+                self.alien_bullets.remove(abullet)
+
+        if pygame.sprite.spritecollideany(self.ship, self.alien_bullets):
+            self._ship_hit()
+
+
     def _ship_hit(self):
         """Respond to the ship being hit by an alien."""
         if self.stats.ships_left > 0:
@@ -194,6 +215,7 @@ class AlienInvasion:
             # Get rid of any remaining bullets and aliens.
             self.bullets.empty()
             self.aliens.empty()
+            self.alien_bullets.empty()
 
             # Create a new fleet and center the ship.
             self._create_fleet()
@@ -304,6 +326,8 @@ class AlienInvasion:
         self.screen.fill(self.settings.bg_color)
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
+        for abullet in self.alien_bullets.sprites():
+            abullet.draw_alien_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
         self.explosions.draw(self.screen)

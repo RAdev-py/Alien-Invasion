@@ -38,6 +38,7 @@ class Settings:
         self.alien_speed = 1.0
         self.powerup_speed = 1.0
         self.drop_chance_threshold = 0.25
+        self.alien_bullet_threshold = .0003
 
         # fleet_direction of 1 represents right; -1 represents left.
         self.fleet_direction = 1
